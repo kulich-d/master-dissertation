@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         default="/Users/diana.kulich/Documents/Masters/dissertation/exp")
                         # default="/Users/diana.kulich/Documents/Masters/dissertation/mediapipe_results")
     parser.add_argument('--exp_name', type=str,
-                        default="experimen_february")
+                        default="experimen_february_check_refactoring")
                         # default="")
     args = parser.parse_args()
     video_name: str = args.video_path.split("/")[-1].split(".")[0]
@@ -38,7 +38,3 @@ if __name__ == '__main__':
         os.mkdir(args.save_path)
     video = VideoReader(args.video_path)
     mediapipe_class.main(video, args.save_path)
-    #
-    # for i, image in enumerate(video):
-    #     cv2.imwrite(os.path.join(args.save_path, "%6d.png" % i), treadmill_coordinates(image))
-    #     None + 1

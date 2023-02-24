@@ -1,15 +1,15 @@
 import math
 import os
+from dataclasses import dataclass
 
 import cv2
 import mediapipe as mp
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from scipy.signal import savgol_filter
+from scipy.signal import find_peaks
 from tslearn.metrics.dtw_variants import dtw_path
 
+import analysis
+import visualization
 from video_rider import VideoReader
 
 mp_drawing = mp.solutions.drawing_utils
@@ -18,20 +18,24 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
 
 # For static images:
-IMAGE_FILES = []
 BG_COLOR = (192, 192, 192)  # gray
 
-collect_right_heel = []  # 30
-collect_right_foot_index = []  # 32
-collect_right_knee = []  # 26
 
-collect_left_heel = []  # 29
-collect_left_foot_index = []  # 31
-collect_left_knee = []  # 25
-from scipy.signal import find_peaks
+@dataclass
+class Skeleton:
+    right_heel = []  # 30
+    right_foot_index = []  # 32
+    right_knee = []  # 26
 
-collect_left_feet_angle = []
-collect_right_feet_angle = []
+    left_heel = []  # 29
+    left_foot_index = []  # 31
+    left_knee = []  # 25
+
+    left_feet_angle = []
+    right_feet_angle = []
+
+
+skeleton = Skeleton()
 
 
 def angle_calculating(a, b):
@@ -39,15 +43,14 @@ def angle_calculating(a, b):
 
 
 def collect_data(landmarks):
-    collect_right_heel.append([landmarks[30].x, np.abs(1 - landmarks[30].y)])
-    collect_right_foot_index.append([landmarks[32].x, np.abs(1 - landmarks[32].y)])
-    collect_right_knee.append([landmarks[26].x, 1 - np.abs(landmarks[26].y)])
-    collect_left_heel.append([landmarks[29].x, 1 - np.abs(landmarks[29].y)])
-    collect_left_foot_index.append([landmarks[31].x, 1 - np.abs(landmarks[31].y)])
-    collect_left_knee.append([landmarks[25].x, 1 - np.abs(landmarks[25].y)])
-
-    collect_left_feet_angle.append(angle_calculating(landmarks[29], landmarks[31]))
-    collect_right_feet_angle.append(angle_calculating(landmarks[30], landmarks[32]))
+    skeleton.right_heel.append([landmarks[30].x, np.abs(1 - landmarks[30].y)])
+    skeleton.right_foot_index.append([landmarks[32].x, np.abs(1 - landmarks[32].y)])
+    skeleton.right_knee.append([landmarks[26].x, 1 - np.abs(landmarks[26].y)])
+    skeleton.left_heel.append([landmarks[29].x, 1 - np.abs(landmarks[29].y)])
+    skeleton.left_foot_index.append([landmarks[31].x, 1 - np.abs(landmarks[31].y)])
+    skeleton.left_knee.append([landmarks[25].x, 1 - np.abs(landmarks[25].y)])
+    skeleton.left_feet_angle.append(angle_calculating(landmarks[29], landmarks[31]))
+    skeleton.right_feet_angle.append(angle_calculating(landmarks[30], landmarks[32]))
 
 
 def first_double_support():
@@ -102,136 +105,36 @@ def second_double_support():
     return all_picks_mean
 
 
-def add_information(image, i, peaks,
-                    Current_step):
-    graph_img_x = cv2.resize(cv2.imread("temp_x.png"), (image.shape[1], image.shape[0]))
-    graph_img_y = cv2.resize(cv2.imread("temp_y.png"), (image.shape[1], image.shape[0]))
-    graph_img_z = cv2.resize(cv2.imread("temp_z.png"), (image.shape[1], image.shape[0]))
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    image = cv2.putText(image, f'{len(peaks)}', (50, 150), font,
-                        2, (255, 0, 0), 2, cv2.LINE_AA)
-
-    # if len(peaks) > 0:
-    #     overlay = image.copy()
-    #     cv2.rectangle(overlay, (0, 0), image.shape[:2][::-1], (0, 200, 0), -1)
-    #     alpha = 0.4  # Transparency factor.
-    #     image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
-
-    # information_image = np.zeros(image.shape, dtype=np.uint8)
-    graph_img = np.concatenate([graph_img_x, graph_img_y], axis=1)
-    image = np.concatenate([image, graph_img_z], axis=1)
-    image = np.concatenate([image, graph_img], axis=0)
-    return image, Current_step
-
-
 #
 
-def visualize():
-    #
-    # plt.plot(x, y, "o", label="observation")
-    # plt.plot(x, y_filter, 'g', lw=3)
-    # fig_x.update_xaxes(title_text="value", title_standoff = 0)
-    # fig_x.update_yaxes(title_text="frame_number", title_standoff = 0)
 
-    fig_x = make_subplots(rows=3, cols=2, x_title="value", y_title="frame_number")
-    fig_y = make_subplots(rows=3, cols=2, x_title="value", y_title="frame_number")
-    fig_z = make_subplots(rows=1, cols=2, x_title="value", y_title="frame_number")
+def save_data(save_path):
+    filter_right_heel = np.array(analysis.filter_data(skeleton.right_heel))
+    np.savetxt(os.path.join(save_path, "filter_right_heel.txt"), filter_right_heel)
 
-    plot_results(collect_right_heel, 1, fig_x, fig_y, "collect_right_heel")
+    filter_right_foot_index = np.array(analysis.filter_data(skeleton.right_foot_index))
+    np.savetxt(os.path.join(save_path, "filter_right_foot_index.txt"), filter_right_foot_index)
 
-    plot_results(collect_right_foot_index, 2, fig_x, fig_y, "collect_right_foot_index")
-    plot_results(collect_right_knee, 3, fig_x, fig_y, "collect_righ t_knee")
+    filter_right_knee = np.array(analysis.filter_data(skeleton.right_knee))
+    np.savetxt(os.path.join(save_path, "filter_right_knee.txt"), filter_right_knee)
 
-    plot_results(collect_left_heel, 4, fig_x, fig_y, "collect_left_heel")
-    plot_results(collect_left_foot_index, 5, fig_x, fig_y, "collect_left_foot_index")
-    plot_results(collect_left_knee, 6, fig_x, fig_y, "collect_left_knee")
-    plot_len(collect_left_feet_angle, 1, fig_z, "collect_left_feet_angle")
-    plot_len(collect_right_feet_angle, 2, fig_z, "collect_right_feet_angle")
-    fig_x.write_image(f"temp_x.png")
-    fig_y.write_image(f"temp_y.png")
-    fig_z.write_image(f"temp_z.png")
+    filter_left_heel = np.array(analysis.filter_data(skeleton.left_heel))
+    np.savetxt(os.path.join(save_path, "filter_left_heel.txt"), filter_left_heel)
 
+    filter_left_foot_index = np.array(analysis.filter_data(skeleton.left_foot_index))
+    np.savetxt(os.path.join(save_path, "filter_left_foot_index.txt"), filter_left_foot_index)
 
-def plot_len(data, i, fig_y, name):
-    color = px.colors.sequential.Plasma[i]
+    filter_left_knee = np.array(analysis.filter_data(skeleton.left_knee))
+    np.savetxt(os.path.join(save_path, "filter_left_knee.txt"), filter_left_knee)
 
-    fig_y.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=np.array(data),
-        name=f'{name}_y',
-        mode='markers',
-        marker_color=color
-    ), row=1, col=i)
-    color = px.colors.sequential.Plasma[i + 1]
+    filter_left_feet_angle = np.array(analysis.filter_data(skeleton.left_feet_angle))
+    np.savetxt(os.path.join(save_path, "filter_left_feet_angle.txt"), filter_left_feet_angle)
 
-    y_filter = np.array(data)
-    window_size = min(len(y_filter), 15)
-    window_size = window_size if window_size % 2 == 1 else window_size - 1
-    y_filter = savgol_filter(y_filter, window_size, min(window_size - 1, 2), mode='interp')
-
-    fig_y.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=y_filter,
-        name=f'{name}_y',
-        mode='lines',
-        marker_color="red"
-    ), row=1, col=i)
-    color = px.colors.sequential.Plasma[i + 1]
-
-
-def plot_results(data, i, fig_x, fig_y, name):
-    color = px.colors.sequential.Plasma[i]
-
-    row = i % 3
-    if row == 0: row = 3
-
-    fig_y.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=np.array(data)[:, 1],
-        name=f'{name}_y',
-        mode='markers',
-        marker_color=color
-    ), row=row, col=int((i - 1) / 3) + 1)
-    color = px.colors.sequential.Plasma[i + 1]
-
-    fig_x.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=np.array(data)[:, 0],
-        name=f'{name}_x',
-        mode='markers',
-        marker_color=color
-    ), row=row, col=int((i - 1) / 3) + 1)
-
-    x_filter = np.array(data)[:, 1]
-    window_size = min(len(x_filter), 15)
-    window_size = window_size if window_size % 2 == 1 else window_size - 1
-    print(window_size)
-    x_filter = savgol_filter(x_filter, window_size, min(window_size - 1, 2), mode='interp')
-
-    y_filter = np.array(data)[:, 0]
-    y_filter = savgol_filter(y_filter, window_size, min(window_size - 1, 2), mode='interp')
-
-    fig_y.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=x_filter,
-        name=f'{name}_y',
-        mode='lines',
-        marker_color="red"
-    ), row=row, col=int((i - 1) / 3) + 1)
-    color = px.colors.sequential.Plasma[i + 1]
-
-    fig_x.append_trace(go.Scatter(
-        x=[k for k in range(len(data))], y=y_filter,
-        name=f'{name}_x',
-        mode='lines',
-        marker_color="red"
-    ), row=row, col=int((i - 1) / 3) + 1)
-
-    # np.savetxt(f"here_{i}_x.csv", np.array(data)[:, 0], delimiter=",")
-    # fig_x.update_layout(xaxis_title="fame number", yaxis_title="value",)
-    # fig_y.update_layout(xaxis_title="fame number", yaxis_title="value",)
-    # fig_x.update_xaxes(title_text="value", title_standoff = 0)
-    # fig_x.update_yaxes(title_text="frame_number", title_standoff = 0)
+    filter_right_feet_angle = np.array(analysis.filter_data(skeleton.right_feet_angle))
+    np.savetxt(os.path.join(save_path, "filter_right_feet_angle.txt"), filter_right_feet_angle)
 
 
 def main(video: VideoReader, save_path):
-    Current_step = ""
-
     with mp_pose.Pose(
             static_image_mode=False,
             model_complexity=2,
@@ -242,74 +145,32 @@ def main(video: VideoReader, save_path):
             #     cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % i), image)
             #
             #     continue
-            if i > 300:
+            if i > 30:
+                # if i > 300:
                 break
             image_height, image_width, _ = image.shape
-            # Convert the BGR image to RGB before processing.
             results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
             if not results.pose_landmarks:
                 cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % i), image)
-
                 continue
+
             collect_data(results.pose_landmarks.landmark)
             annotated_image = image.copy()
-            # Draw segmentation on the image.
-            # To improve segmentation around boundaries, consider applying a joint
-            # bilateral filter to "results.segmentation_mask" with "image".
-            # condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > 0.1
             bg_image = np.zeros(image.shape, dtype=np.uint8)
             bg_image[:] = BG_COLOR
-            # annotated_image = np.where(condition, annotated_image, bg_image)
-            # Draw pose landmarks on the image.
             mp_drawing.draw_landmarks(
                 annotated_image,
                 results.pose_landmarks,
                 mp_pose.POSE_CONNECTIONS,
                 landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
-            peaks_steps, _ = find_peaks(np.array(collect_right_heel)[:, 0], height=0)
-            #
-            # print(i)
-            visualize()
-            annotated_image, Current_step = add_information(annotated_image, i, peaks_steps, Current_step)
+
+            steps_count, _ = find_peaks(np.array(skeleton.right_heel)[:, 0], height=0)# recognize start os the new step like max of right heel
+            visualization.visualize_landmarks_coordinates(skeleton)
+            annotated_image = visualization.concat_visulisations(annotated_image, steps_count)
             cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % i), annotated_image)
-            # Plot pose world landmarks.
-            # mp_drawing.plot_landmarks(save_path, "world_%6d" % i,
-            #                           results.pose_world_landmarks, mp_pose.POSE_CONNECTIONS)
 
-    collect_right_heel_array = np.array(collect_right_heel)
-    collect_right_heel_array[:, 0] = savgol_filter(collect_right_heel_array[:, 0], 15, 2, mode='interp')
-    collect_right_heel_array[:, 1] = savgol_filter(collect_right_heel_array[:, 1], 15, 2, mode='interp')
-    np.savetxt("collect_right_heel.txt", collect_right_heel_array)
-
-    collect_right_foot_index_array = np.array(collect_right_foot_index)
-    collect_right_foot_index_array[:, 1] = savgol_filter(collect_right_foot_index_array[:, 1], 15, 2, mode='interp')
-    collect_right_foot_index_array[:, 0] = savgol_filter(collect_right_foot_index_array[:, 0], 15, 2, mode='interp')
-    np.savetxt("collect_right_foot_index.txt", collect_right_foot_index_array)
-
-    collect_right_knee_array = np.array(collect_right_knee)
-    collect_right_knee_array[:, 1] = savgol_filter(collect_right_knee_array[:, 1], 15, 2, mode='interp')
-    collect_right_knee_array[:, 0] = savgol_filter(collect_right_knee_array[:, 0], 15, 2, mode='interp')
-    np.savetxt("collect_right_knee.txt", collect_right_knee_array)
-
-    collect_left_heel_array = np.array(collect_left_heel)
-    collect_left_heel_array[:, 1] = savgol_filter(collect_left_heel_array[:, 1], 15, 2, mode='interp')
-    collect_left_heel_array[:, 0] = savgol_filter(collect_left_heel_array[:, 0], 15, 2, mode='interp')
-    np.savetxt("collect_left_heel.txt", collect_left_heel_array)
-
-    collect_left_foot_index_array = np.array(collect_left_foot_index)
-    collect_left_foot_index_array[:, 1] = savgol_filter(collect_left_foot_index_array[:, 1], 15, 2, mode='interp')
-    collect_left_foot_index_array[:, 0] = savgol_filter(collect_left_foot_index_array[:, 0], 15, 2, mode='interp')
-    np.savetxt("collect_left_foot_index.txt", collect_left_foot_index_array)
-
-    collect_left_knee_array = np.array(collect_left_knee)
-    collect_left_knee_array[:, 1] = savgol_filter(collect_left_knee_array[:, 1], 15, 2, mode='interp')
-    collect_left_knee_array[:, 0] = savgol_filter(collect_left_knee_array[:, 0], 15, 2, mode='interp')
-    np.savetxt("collect_left_knee.txt", collect_left_knee_array)
-
-    np.savetxt("collect_left_feet_angle.txt", collect_left_feet_angle)
-
-    np.savetxt("collect_right_feet_angle.txt", collect_right_feet_angle)
+    save_data(save_path)
     post_analysis(save_path)
 
 
