@@ -65,7 +65,7 @@ def visualize_angle(data, i, fig_y, name):
 
 def visualize_coordinates(data, i, fig_x, fig_y, name):
     color = px.colors.sequential.Plasma[i]
-    x_filter, y_filter = analysis.filter_data(data)
+    x_filter, y_filter = analysis.filter_data_coordinates(data)
 
     row = i % 3
     if row == 0: row = 3

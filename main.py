@@ -2,6 +2,7 @@ import argparse
 import os
 
 import cv2
+
 import mediapipe_class
 from video_rider import VideoReader
 
@@ -21,15 +22,15 @@ def treadmill_coordinates(image):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--video_path', type=str,
-                        default="/Users/diana.kulich/Documents/Masters/dissertation/data/1/ch01_20180308130614.avi")
-    # default="/Users/diana.kulich/Documents/Masters/dissertation/data/каражан/ch01_20210909192521.mp4")
+                        # default="/Users/diana.kulich/Documents/Masters/dissertation/data/1/ch01_20180308130614.avi")
+    default="/Users/diana.kulich/Documents/Masters/dissertation/data/каражан/ch01_20210909192521.mp4")
     # default="/Users/diana.kulich/Documents/experiments/source_video/video_2.avi")
     parser.add_argument('--save_path', type=str,
                         default="/Users/diana.kulich/Documents/Masters/dissertation/exp")
-                        # default="/Users/diana.kulich/Documents/Masters/dissertation/mediapipe_results")
+    # default="/Users/diana.kulich/Documents/Masters/dissertation/mediapipe_results")
     parser.add_argument('--exp_name', type=str,
-                        default="experimen_february_check_refactoring")
-                        # default="")
+                        default="Karjan_check_new_support_100")
+    # default="")
     args = parser.parse_args()
     video_name: str = args.video_path.split("/")[-1].split(".")[0]
 
