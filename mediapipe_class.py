@@ -10,6 +10,7 @@ from tslearn.barycenters import dtw_barycenter_averaging_subgradient
 from tslearn.metrics.dtw_variants import dtw_path
 
 import analysis
+import visualization
 from video_rider import VideoReader
 
 mp_drawing = mp.solutions.drawing_utils
@@ -160,9 +161,6 @@ def save_data(save_path, steps_count):
     np.savetxt(os.path.join(save_path, "right_heel.txt"), skeleton.right_heel)
 
 
-import visualization
-
-
 def main(video: VideoReader, save_path):
     with mp_pose.Pose(
             static_image_mode=False,
@@ -174,7 +172,7 @@ def main(video: VideoReader, save_path):
             #     cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % i), image)
             #
             #     continue
-            if i > 100:
+            if i > 700:
                 break
             image_height, image_width, _ = image.shape
             results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -201,7 +199,6 @@ def main(video: VideoReader, save_path):
             cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % i), annotated_image)
 
     save_data(save_path, steps_count)
-    i = 100
     post_analysis(save_path, i)
 
 
@@ -398,4 +395,12 @@ def post_analysis(save_path, frames_number):
         image = cv2.putText(image, v, (1600, 150), font,
                             2, (255, 0, 0), 2, cv2.LINE_AA)
         cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % k), image)
-    print(all_information)
+
+    import json
+    with open(os.path.join(save_path, "all_information.json"), "w", encoding='ascii') as json_file:
+        json.dump(all_information, json_file, default=str)
+    # print(all_information)
+    # Reading with the json module
+    with open(os.path.join(save_path, "all_information.json"), encoding='ascii') as f:
+        data = json.load(f)
+    print(data)
