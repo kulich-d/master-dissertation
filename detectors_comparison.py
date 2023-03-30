@@ -9,6 +9,7 @@ path_openpose = "/Users/diana.kulich/Documents/Masters/dissertation/open_pose_re
 path_yolo = "/Users/diana.kulich/Documents/Masters/dissertation/yolov7/runs/test"
 save_path = "/Users/diana.kulich/Documents/Masters/dissertation/detectors_comparison"
 count = 0
+
 while True:
     f_name = os.path.join(path_mediapipe, video_name, "frame%d.jpg" % count)
     image_mediapipe = cv2.imread(f_name)  # save frame as JPEG file
