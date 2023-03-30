@@ -4,18 +4,37 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.signal import savgol_filter
+import os
+import data_filtering
+import mediapipe as mp
 
-import analysis
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_pose = mp.solutions.pose
+
+# For static images:
+BG_COLOR = (192, 192, 192)  # gray
 
 
-def concat_visulisations(image, steps_count):
+def create_annotation(image, results, skeleton):
+    annotated_image = image.copy()
+    bg_image = np.zeros(image.shape, dtype=np.uint8)
+    bg_image[:] = BG_COLOR
+    mp_drawing.draw_landmarks(
+        annotated_image,
+        results.pose_landmarks,
+        mp_pose.POSE_CONNECTIONS,
+        landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
+
+    visualize_landmarks_coordinates(skeleton)
+    annotated_image = concat_visulisations(annotated_image)
+    return annotated_image
+
+
+def concat_visulisations(image):
     graph_img_x = cv2.resize(cv2.imread("temp_x.png"), (image.shape[1], image.shape[0]))
     graph_img_y = cv2.resize(cv2.imread("temp_y.png"), (image.shape[1], image.shape[0]))
     graph_img_z = cv2.resize(cv2.imread("temp_z.png"), (image.shape[1], image.shape[0]))
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    image = cv2.putText(image, f'{len(steps_count)}', (50, 150), font,
-                        2, (255, 0, 0), 2, cv2.LINE_AA)
-
     graph_img = np.concatenate([graph_img_x, graph_img_y], axis=1)
     image = np.concatenate([image, graph_img_z], axis=1)
     image = np.concatenate([image, graph_img], axis=0)
@@ -65,7 +84,7 @@ def visualize_angle(data, i, fig_y, name):
 
 def visualize_coordinates(data, i, fig_x, fig_y, name):
     color = px.colors.sequential.Plasma[i]
-    x_filter, y_filter = analysis.filter_data_coordinates(data)
+    x_filter, y_filter = data_filtering.filter_data_coordinates(data)
 
     row = i % 3
     if row == 0: row = 3
@@ -98,3 +117,18 @@ def visualize_coordinates(data, i, fig_x, fig_y, name):
         mode='lines',
         marker_color="red"
     ), row=row, col=int((i - 1) / 3) + 1)
+
+def report_visualization(state_dict,step_start, save_path):
+    steps_count = 0
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    for k, v in state_dict.items():
+
+        image = cv2.imread(os.path.join(save_path, "frame%d.jpg" % k))
+        if k in step_start:
+            steps_count += 1
+        image = cv2.putText(image, f'{steps_count}', (50, 150), font,
+                            2, (255, 0, 0), 2, cv2.LINE_AA)
+        image = cv2.putText(image, v, (1600, 150), font,
+                            2, (255, 0, 0), 2, cv2.LINE_AA)
+        cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % k), image)
+

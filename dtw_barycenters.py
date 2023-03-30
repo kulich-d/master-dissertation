@@ -12,7 +12,11 @@ save_path = "/Users/diana.kulich/Documents/Masters/dissertation/exp/check_new su
 side = "left"
 x_heel = 1 - np.loadtxt(os.path.join(save_path, f"filter_{side}_heel.txt"))[0, :]
 x_foot_index = 1 - np.loadtxt(os.path.join(save_path, f"filter_{side}_foot_index.txt"))[0, :]
-X = np.stack([x_heel, x_foot_index])
+x_knee = 1 - np.loadtxt(os.path.join(save_path, f"filter_{side}_knee.txt"))[0, :]
+X = np.stack([x_heel, x_foot_index, x_knee])
+plt.plot(x_heel, label="x left heel")
+plt.plot(x_foot_index, label="x left foot index")
+plt.plot(x_knee, label="x left knee")
 coordinates_barycenter = dtw_barycenter_averaging_subgradient(X, max_iter=50, tol=1e-3)
 angle_left = np.loadtxt(os.path.join(save_path, "filter_left_feet_angle.txt"))
 angle_right = 1 - np.loadtxt(os.path.join(save_path, "filter_left_knee.txt"))[1, :]
@@ -98,7 +102,8 @@ for p in peaks_y_2:
 
 print(f"common_picks: {all_picks}")
 print(f"common_mean_picks: {all_picks_mean}")
-plt.plot(coordinates_barycenter)
-plt.plot(angle_barycenter)
+plt.plot(coordinates_barycenter, label="barycenter")
+# plt.plot(angle_barycenter)
 plt.title("DBA (subgradient descent approach)")
+plt.legend()
 plt.show()
