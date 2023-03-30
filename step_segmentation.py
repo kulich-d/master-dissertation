@@ -70,7 +70,7 @@ def end_second_double_support(save_path):
             all_picks_mean.append(np.mean([p, path_dtw_2[p]]))
 
     print(f"common_picks: {all_picks}")
-    print(f"common_mean_picks: {all_picks_mean}")  # это и есть дабл сапорт первый
+    print(f"common_mean_picks: {all_picks_mean}")
     return all_picks_mean
 
 
