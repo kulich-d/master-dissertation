@@ -15,6 +15,10 @@ mp_pose = mp.solutions.pose
 # For static images:
 BG_COLOR = (192, 192, 192)  # gray
 
+x_file_name = "temp_x.png"
+y_file_name = "temp_y.png"
+z_file_name = "temp_z.png"
+
 
 def create_annotation(image, results, skeleton):
     annotated_image = image.copy()
@@ -32,9 +36,9 @@ def create_annotation(image, results, skeleton):
 
 
 def concat_visulisations(image):
-    graph_img_x = cv2.resize(cv2.imread("temp_x.png"), (image.shape[1], image.shape[0]))
-    graph_img_y = cv2.resize(cv2.imread("temp_y.png"), (image.shape[1], image.shape[0]))
-    graph_img_z = cv2.resize(cv2.imread("temp_z.png"), (image.shape[1], image.shape[0]))
+    graph_img_x = cv2.resize(cv2.imread(x_file_name), (image.shape[1], image.shape[0]))
+    graph_img_y = cv2.resize(cv2.imread(y_file_name), (image.shape[1], image.shape[0]))
+    graph_img_z = cv2.resize(cv2.imread(z_file_name), (image.shape[1], image.shape[0]))
     graph_img = np.concatenate([graph_img_x, graph_img_y], axis=1)
     image = np.concatenate([image, graph_img_z], axis=1)
     image = np.concatenate([image, graph_img], axis=0)
@@ -54,9 +58,9 @@ def visualize_landmarks_coordinates(skeleton):
     visualize_coordinates(skeleton.left_knee, 6, fig_x, fig_y, "left_knee")
     visualize_angle(skeleton.left_feet_angle, 1, fig_z, "left_feet_angle")
     visualize_angle(skeleton.right_feet_angle, 2, fig_z, "right_feet_angle")
-    fig_x.write_image(f"temp_x.png")
-    fig_y.write_image(f"temp_y.png")
-    fig_z.write_image(f"temp_z.png")
+    fig_x.write_image(x_file_name)
+    fig_y.write_image(y_file_name)
+    fig_z.write_image(z_file_name)
 
 
 def visualize_angle(data, i, fig_y, name):
@@ -118,7 +122,8 @@ def visualize_coordinates(data, i, fig_x, fig_y, name):
         marker_color="red"
     ), row=row, col=int((i - 1) / 3) + 1)
 
-def report_visualization(state_dict,step_start, save_path):
+
+def report_visualization(state_dict, step_start, save_path):
     steps_count = 0
     font = cv2.FONT_HERSHEY_SIMPLEX
     for k, v in state_dict.items():
@@ -131,4 +136,3 @@ def report_visualization(state_dict,step_start, save_path):
         image = cv2.putText(image, v, (1600, 150), font,
                             2, (255, 0, 0), 2, cv2.LINE_AA)
         cv2.imwrite(os.path.join(save_path, "frame%d.jpg" % k), image)
-

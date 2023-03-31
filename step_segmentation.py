@@ -7,7 +7,7 @@ import utils
 import posprocessing
 
 
-def main(save_path):
+def run(save_path):
     frames_start_second_double_support = start_second_double_support(save_path)
     start_steps, _ = find_peaks(
         np.loadtxt(os.path.join(save_path, f"right_heel.txt")).astype(np.float)[:, 0],

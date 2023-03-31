@@ -30,4 +30,4 @@ if __name__ == '__main__':
     if not os.path.exists(args.save_path):
         os.mkdir(args.save_path)
     video = VideoReader(args.video_path)
-    pipeline.main(video, args.save_path, args.visualize)
+    pipeline.run(video, args.save_path, args.visualize)

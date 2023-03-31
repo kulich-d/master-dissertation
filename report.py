@@ -40,7 +40,7 @@ class DataReport:
 def create_report(save_path, frames_number, video, visualize):
     data_report = DataReport()
     data_report = utils.read_data(data_report, save_path)
-    step_start, start_second_double_support, end_first_double_support, end_second_double_support = step_segmentation.main(
+    step_start, start_second_double_support, end_first_double_support, end_second_double_support = step_segmentation.run(
         save_path)
 
     state_dict = {i: "None" for i in range(frames_number)}

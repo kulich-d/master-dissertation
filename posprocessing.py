@@ -8,12 +8,11 @@ def frames_borders(data, minf, maxf):
     return filter_data
 
 
-def skip_unnecessary_frames(frames_with_steps, frames_start_second_double_support, frames_first_double_support,
-                            frames_second_double_support):
-    min_frame = np.min(frames_with_steps)
-    max_frame = np.max(frames_with_steps)
-    frames_start_second_double_support = frames_borders(frames_start_second_double_support, min_frame, max_frame)
-    frames_first_double_support = frames_borders(frames_first_double_support, min_frame, max_frame)
-    frames_second_double_support = frames_borders(frames_second_double_support, min_frame, max_frame)
-    return frames_start_second_double_support, frames_first_double_support, frames_second_double_support
+def skip_unnecessary_frames(steps_start, start_second_double_support, first_double_support, second_double_support):
+    min_frame = np.min(steps_start)
+    max_frame = np.max(steps_start)
+    start_second_double_support = frames_borders(start_second_double_support, min_frame, max_frame)
+    first_double_support = frames_borders(first_double_support, min_frame, max_frame)
+    second_double_support = frames_borders(second_double_support, min_frame, max_frame)
+    return start_second_double_support, first_double_support, second_double_support
 

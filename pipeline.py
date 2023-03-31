@@ -32,7 +32,7 @@ class Skeleton:
     right_feet_angle = []
 
 
-def main(video: VideoReader, save_path, visualize):
+def run(video: VideoReader, save_path, visualize):
     mask = 0
     skeleton = Skeleton()
     with mp_pose.Pose(
